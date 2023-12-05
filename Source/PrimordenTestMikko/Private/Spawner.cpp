@@ -16,6 +16,7 @@ void ASpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	//Spawn the desired amount of Circles
 	FActorSpawnParameters SpawnInfo;
 
 	for (size_t i = 0; i < Amount; i++)

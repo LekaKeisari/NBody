@@ -20,6 +20,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	//This makes it possible to use a child blueprint of ACircle
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ACircle> BP_CircleTest;
 

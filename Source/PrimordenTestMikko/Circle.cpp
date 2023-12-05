@@ -8,6 +8,7 @@ ACircle::ACircle()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//Only component creation is handled here. I assumed from the instructions that it's ok to handle rest of the config in a child blueprint.
 	SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
 	SetRootComponent(SpriteComponent);
 		
@@ -18,6 +19,7 @@ void ACircle::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	//Randomize the initial movement direction
 	double DirectionX = FMath::RandRange(-1000, 1000);
 	double DirectionZ = FMath::RandRange(-1000, 1000);
 
@@ -33,31 +35,10 @@ void ACircle::Tick(float DeltaTime)
 
 	HandleMovement(DeltaTime);
 
+	//Checks if the Circle is outside of viewport and teleports to the opposite side.
 	if (!WasRecentlyRendered(0.5f))
 	{
-		FVector2D ScreenLocation = FVector2D(0,0);
-		UGameplayStatics::ProjectWorldToScreen(UGameplayStatics::GetPlayerController(GetWorld(), 0), GetActorLocation(), ScreenLocation, true);
-		
-
-		if (ScreenLocation.X > GetViewportSize().X)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::WidthMax), false, nullptr, ETeleportType::TeleportPhysics);
-		}
-		else if (ScreenLocation.X < 0)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::WidthMin));
-
-		}
-		 if (ScreenLocation.Y > GetViewportSize().Y)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::HeightMax));
-
-		}
-		else if (ScreenLocation.Y < 0)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::HeightMin));
-		}
-				
+		TeleportToOtherSide();				
 	}
 }
 
@@ -109,5 +90,32 @@ FVector ACircle::CalculateTeleport(TeleportCase Case)
 
 		return FVector(0, 0, 0);
 		break;
+	}
+}
+
+//Handle the actual teleportation
+void ACircle::TeleportToOtherSide() 
+{
+	FVector2D ScreenLocation = FVector2D(0, 0);
+	UGameplayStatics::ProjectWorldToScreen(UGameplayStatics::GetPlayerController(GetWorld(), 0), GetActorLocation(), ScreenLocation, true);
+
+
+	if (ScreenLocation.X > GetViewportSize().X)
+	{
+		SetActorLocation(CalculateTeleport(TeleportCase::WidthMax), false, nullptr, ETeleportType::TeleportPhysics);
+	}
+	else if (ScreenLocation.X < 0)
+	{
+		SetActorLocation(CalculateTeleport(TeleportCase::WidthMin));
+
+	}
+	if (ScreenLocation.Y > GetViewportSize().Y)
+	{
+		SetActorLocation(CalculateTeleport(TeleportCase::HeightMax));
+
+	}
+	else if (ScreenLocation.Y < 0)
+	{
+		SetActorLocation(CalculateTeleport(TeleportCase::HeightMin));
 	}
 }

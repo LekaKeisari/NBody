@@ -43,6 +43,9 @@ protected:
 	UFUNCTION()
 	FVector2D GetViewportSize();
 
+	UFUNCTION()
+	void TeleportToOtherSide();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sprites")
 	class UPaperSpriteComponent* SpriteComponent;
 
