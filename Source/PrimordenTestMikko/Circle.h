@@ -22,8 +22,6 @@ public:
 	// Sets default values for this actor's properties
 	ACircle();
 
-
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -37,17 +35,20 @@ protected:
 	UFUNCTION()
 	void HandleMovement(float DeltaTime);
 
-	UFUNCTION()
-	FVector CalculateTeleport(TeleportCase Case);
-
-	UFUNCTION()
-	FVector2D GetViewportSize();
+	class RunnableTeleport* TeleportRunnable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sprites")
 	class UPaperSpriteComponent* SpriteComponent;
 
 public:	
+
+	virtual void BeginDestroy() override;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	
+
+	UFUNCTION()
+	virtual void RunTeleportStep();
 };

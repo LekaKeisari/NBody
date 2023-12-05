@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Circle.h"
+#include "HAL/Runnable.h"
+#include "Async/Future.h"
+#include "RunnableTeleport.h"
 
 // Sets default values
 ACircle::ACircle()
@@ -11,6 +14,17 @@ ACircle::ACircle()
 	SpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Sprite"));
 	SetRootComponent(SpriteComponent);
 		
+}
+
+void ACircle::BeginDestroy()
+{
+	if (TeleportRunnable)
+	{
+		delete TeleportRunnable;
+		TeleportRunnable = nullptr;
+	}
+	
+	Super::BeginDestroy();
 }
 
 // Called when the game starts or when spawned
@@ -35,28 +49,29 @@ void ACircle::Tick(float DeltaTime)
 
 	if (!WasRecentlyRendered(0.5f))
 	{
-		FVector2D ScreenLocation = FVector2D(0,0);
-		UGameplayStatics::ProjectWorldToScreen(UGameplayStatics::GetPlayerController(GetWorld(), 0), GetActorLocation(), ScreenLocation, true);
-		
+		RunTeleportStep();
+		//FVector2D ScreenLocation = FVector2D(0,0);
+		//UGameplayStatics::ProjectWorldToScreen(UGameplayStatics::GetPlayerController(GetWorld(), 0), GetActorLocation(), ScreenLocation, true);
+		//
 
-		if (ScreenLocation.X > GetViewportSize().X)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::WidthMax), false, nullptr, ETeleportType::TeleportPhysics);
-		}
-		else if (ScreenLocation.X < 0)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::WidthMin));
+		//if (ScreenLocation.X > GetViewportSize().X)
+		//{
+		//	SetActorLocation(CalculateTeleport(TeleportCase::WidthMax), false, nullptr, ETeleportType::TeleportPhysics);
+		//}
+		//else if (ScreenLocation.X < 0)
+		//{
+		//	SetActorLocation(CalculateTeleport(TeleportCase::WidthMin));
 
-		}
-		 if (ScreenLocation.Y > GetViewportSize().Y)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::HeightMax));
+		//}
+		// if (ScreenLocation.Y > GetViewportSize().Y)
+		//{
+		//	SetActorLocation(CalculateTeleport(TeleportCase::HeightMax));
 
-		}
-		else if (ScreenLocation.Y < 0)
-		{
-			SetActorLocation(CalculateTeleport(TeleportCase::HeightMin));
-		}
+		//}
+		//else if (ScreenLocation.Y < 0)
+		//{
+		//	SetActorLocation(CalculateTeleport(TeleportCase::HeightMin));
+		//}
 				
 	}
 }
@@ -68,46 +83,16 @@ void ACircle::HandleMovement(float DeltaTime)
 	SetActorLocation(NewLocation);
 }
 
-FVector2D ACircle::GetViewportSize() 
+
+
+void ACircle::RunTeleportStep()
 {
-	FVector2D Result = FVector2D(1, 1);
-
-	if (GEngine && GEngine->GameViewport)
-	{
-		GEngine->GameViewport->GetViewportSize(Result);
-	}
-
-	return Result;
-}
-
-//Calculate the location on the other side of the screen
-FVector ACircle::CalculateTeleport(TeleportCase Case)
-{
-	switch (Case)
-	{
-	case TeleportCase::HeightMin:
-
-		return FVector(GetActorLocation().X, 0, GetActorLocation().Z - GetViewportSize().Y);
-		
-		break;
-	case TeleportCase::HeightMax:
-
-		return FVector(GetActorLocation().X, 0, GetActorLocation().Z + GetViewportSize().Y);
-
-		break;
-	case TeleportCase::WidthMin:
-
-		return FVector(GetActorLocation().X + GetViewportSize().X, 0, GetActorLocation().Z);
-
-		break;
-	case TeleportCase::WidthMax:
-
-		return FVector(GetActorLocation().X - GetViewportSize().X, 0, GetActorLocation().Z);
-
-		break;
-	default:
-
-		return FVector(0, 0, 0);
-		break;
-	}
+	TPromise<FVector>* Promise = new TPromise<FVector>();
+	Promise->GetFuture().Next([this](FVector NewLocation)
+		{
+			// You should do something more interesting here
+			this->SetActorLocation(NewLocation);
+				//Promise = nullptr;
+		});
+	TeleportRunnable = new RunnableTeleport(Promise, this);
 }
